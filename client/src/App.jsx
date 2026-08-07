@@ -18,6 +18,7 @@ import AdminPortal from './pages/admin/AdminPortal';
 import AdminDoctors from './pages/admin/AdminDoctors';
 import AdminPrts from './pages/admin/AdminPrts';
 import EditPrt from './pages/admin/EditPrt';
+import EditPatient from './pages/admin/EditPatient';
 import AdminMedicines from './pages/admin/AdminMedicines';
 import AdminReports from './pages/admin/AdminReports';
 
@@ -74,6 +75,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['admin', 'prt', 'doctor']}>
               <PatientDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-patients/:id/edit"
+          element={
+            <ProtectedRoute adminOnly>
+              <EditPatient />
             </ProtectedRoute>
           }
         />

@@ -24,6 +24,8 @@ export default function PatientDetail() {
   const [postVitalsModal, setPostVitalsModal] = useState(null); // holds session object
   const [medicineModal, setMedicineModal] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [sessionForm, setSessionForm] = useState({ sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', meetingLink: '' });
@@ -111,6 +113,20 @@ export default function PatientDetail() {
     }
   };
 
+  const confirmDeletePatient = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/patients/${id}`);
+      toast.success('Patient deleted');
+      navigate('/my-patients');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete patient');
+    } finally {
+      setDeleting(false);
+      setDeleteModal(false);
+    }
+  };
+
   const submitPatientLogin = async (e) => {
     e.preventDefault();
     if (!loginForm.loginEmail || !loginForm.password) return toast.error('Email and password are required');
@@ -172,6 +188,28 @@ export default function PatientDetail() {
                     }}
                   >
                     <KeyRound className="h-3.5 w-3.5" /> Create Patient Login
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate(`/my-patients/${id}/edit`);
+                    }}
+                  >
+                    Edit Patient
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setDeleteModal(true);
+                    }}
+                  >
+                    Delete Patient
                   </button>
                 )}
               </div>
@@ -380,6 +418,29 @@ export default function PatientDetail() {
         </p>
         <TextField label="Login Email" required type="email" value={loginForm.loginEmail} onChange={(e) => setLoginForm((f) => ({ ...f, loginEmail: e.target.value }))} placeholder={patient.email || 'patient@example.com'} />
         <TextField label="Temporary Password" required value={loginForm.password} onChange={(e) => setLoginForm((f) => ({ ...f, password: e.target.value }))} placeholder="Min 6 characters" />
+      </Modal>
+
+      {/* Delete Patient Confirmation (Admin only) */}
+      <Modal
+        open={deleteModal}
+        onClose={() => setDeleteModal(false)}
+        title="Delete Patient"
+        footer={
+          <>
+            <button className="btn-secondary flex-1" onClick={() => setDeleteModal(false)}>Cancel</button>
+            <button
+              className="btn-primary flex-1 bg-red-600 hover:bg-red-700"
+              disabled={deleting}
+              onClick={confirmDeletePatient}
+            >
+              {deleting ? 'Deleting…' : 'Delete Patient'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Are you sure you want to delete <span className="font-semibold">{patient.name}</span>? This will permanently remove their record, all session logs, and all medicine data. This action cannot be undone.
+        </p>
       </Modal>
     </div>
   );

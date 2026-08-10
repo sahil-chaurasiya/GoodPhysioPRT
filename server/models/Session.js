@@ -8,7 +8,7 @@ const sessionSchema = new mongoose.Schema(
     sessionType: {
       type: String,
       required: true,
-      enum: ['Physical Rehab', 'Assessment', 'Follow-up', 'Physical Therapy / Rehab'],
+      enum: ['Physical Session', 'Online Session', 'Consultation'],
     },
     exerciseName: { type: String, trim: true },
 
@@ -17,9 +17,11 @@ const sessionSchema = new mongoose.Schema(
     meetingLink: { type: String, trim: true },
 
     preVitals: {
-      spo2Percent: { type: Number, required: true },
-      heartRate: { type: Number, required: true },
-      bpMmhg: { type: String, required: true }, // SYS/DIA
+      // Not schema-required: a Consultation session can skip pre-vitals
+      // entirely (see createSession's conditional check for the other types).
+      spo2Percent: { type: Number },
+      heartRate: { type: Number },
+      bpMmhg: { type: String }, // SYS/DIA
     },
 
     postVitals: {

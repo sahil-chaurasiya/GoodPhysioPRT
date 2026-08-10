@@ -238,8 +238,17 @@ exports.createSession = async (req, res) => {
     if (!patient) return res.status(404).json({ message: 'Patient not found' });
 
     const { sessionType, exerciseName, spo2Percent, heartRate, bpMmhg, meetingLink } = req.body;
-    if (!sessionType || spo2Percent === undefined || heartRate === undefined || !bpMmhg) {
-      return res.status(400).json({ message: 'sessionType, spo2Percent, heartRate and bpMmhg are required' });
+    if (!sessionType) {
+      return res.status(400).json({ message: 'sessionType is required' });
+    }
+    // Consultations may skip pre-session vitals entirely; every other
+    // session type still requires them.
+    const vitalsProvided = spo2Percent !== undefined || heartRate !== undefined || bpMmhg;
+    if (sessionType !== 'Consultation' && (spo2Percent === undefined || heartRate === undefined || !bpMmhg)) {
+      return res.status(400).json({ message: 'spo2Percent, heartRate and bpMmhg are required' });
+    }
+    if (sessionType === 'Consultation' && vitalsProvided && (spo2Percent === undefined || heartRate === undefined || !bpMmhg)) {
+      return res.status(400).json({ message: 'If recording vitals, spo2Percent, heartRate and bpMmhg are all required' });
     }
 
     const existingCount = await Session.countDocuments({ patient: patient._id });

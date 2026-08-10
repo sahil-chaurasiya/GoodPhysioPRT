@@ -42,14 +42,14 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="card space-y-4 p-6">
           <div>
-            <label className="field-label field-required">Login Email</label>
+            <label className="field-label field-required">Login Email / Phone Number</label>
             <input
-              type="email"
+              type="text"
               required
               autoFocus
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              placeholder="you@cipla.com"
+              placeholder="you@cipla.com or 10-digit phone number"
               className="input"
             />
           </div>
@@ -77,11 +77,6 @@ export default function Login() {
             {submitting ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          First time running the app? A demo account is seeded for every role — see{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5">server/.env</code> and the README for credentials.
-        </p>
       </div>
     </div>
   );

@@ -106,6 +106,14 @@ exports.createPatient = async (req, res) => {
       return res.status(400).json({ message: 'Missing required patient fields (name, age, gender, phone, doctor, diagnosis, consent form)' });
     }
 
+    const normalizedPhone = String(phoneNumber).trim();
+
+    // Every patient's phone number must be distinct — it also doubles as their portal login.
+    const existingPatient = await Patient.findOne({ phoneNumber: normalizedPhone });
+    if (existingPatient) {
+      return res.status(409).json({ message: 'A patient with this phone number is already registered' });
+    }
+
     const patientId = await generateId(Patient, 'patientId', 'PAT', { withYear: true, padding: 4 });
 
     const patient = await Patient.create({
@@ -113,7 +121,7 @@ exports.createPatient = async (req, res) => {
       name,
       age,
       gender,
-      phoneNumber,
+      phoneNumber: normalizedPhone,
       email,
       assignedDoctor,
       lungCondition,
@@ -132,8 +140,33 @@ exports.createPatient = async (req, res) => {
       addedByPrtEmail: req.user.loginEmail,
     });
 
-    res.status(201).json(patient);
+    // Auto-create the patient's portal login: phone number is the username,
+    // default password "123456" (patient can change it later from Me/Profile).
+    let loginCreated = false;
+    try {
+      const existingLogin = await User.findOne({ loginEmail: normalizedPhone.toLowerCase() });
+      if (!existingLogin) {
+        await User.create({
+          name: patient.name,
+          loginEmail: normalizedPhone,
+          userEmail: email || normalizedPhone,
+          password: '123456',
+          role: 'patient',
+          linkedPatient: patient._id,
+        });
+        loginCreated = true;
+      }
+    } catch (loginErr) {
+      // Don't fail patient registration if login creation hits an edge case —
+      // an admin can still create it manually from the patient's page.
+      console.error('Failed to auto-create patient login:', loginErr.message);
+    }
+
+    res.status(201).json({ ...patient.toObject(), loginCreated });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'A patient with this phone number is already registered' });
+    }
     res.status(500).json({ message: 'Failed to register patient', error: err.message });
   }
 };
@@ -149,6 +182,17 @@ exports.updatePatient = async (req, res) => {
       return res.status(403).json({ message: 'You can only edit patients you registered' });
     }
 
+    if (req.body.phoneNumber !== undefined) {
+      const normalizedPhone = String(req.body.phoneNumber).trim();
+      if (normalizedPhone !== patient.phoneNumber) {
+        const existing = await Patient.findOne({ phoneNumber: normalizedPhone, _id: { $ne: patient._id } });
+        if (existing) {
+          return res.status(409).json({ message: 'A patient with this phone number is already registered' });
+        }
+      }
+      req.body.phoneNumber = normalizedPhone;
+    }
+
     const editable = [
       'name', 'age', 'gender', 'phoneNumber', 'email', 'assignedDoctor', 'lungCondition',
       'secondaryConditions', 'timeSlot', 'reasonNotJoiningOnline', 'languageForSession',
@@ -161,6 +205,9 @@ exports.updatePatient = async (req, res) => {
     await patient.save();
     res.json(patient);
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'A patient with this phone number is already registered' });
+    }
     res.status(500).json({ message: 'Failed to update patient', error: err.message });
   }
 };

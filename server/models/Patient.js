@@ -8,7 +8,7 @@ const patientSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     age: { type: Number, required: true },
     gender: { type: String, required: true, enum: ['Male', 'Female', 'Other'] },
-    phoneNumber: { type: String, required: true, trim: true },
+    phoneNumber: { type: String, required: true, trim: true, unique: true },
     email: { type: String, trim: true, lowercase: true },
 
     // Section 2: Doctor & Clinical Info

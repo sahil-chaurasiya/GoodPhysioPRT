@@ -6,11 +6,10 @@ import api from '../api/axios';
 import { TextField, SelectField, RadioGroup, CheckboxGroup, TextareaField } from '../components/FormFields';
 import { Spinner } from '../components/Ui';
 
-const LUNG_CONDITIONS = ['COPD', 'Asthma', 'Pulmonary Fibrosis', 'Hypertension', 'Post-Stroke Rehab', 'Other'];
 const COMORBIDITIES = ['Hypertension', 'Cardiac Condition', 'Diabetes', 'Obesity', 'Arthritis'];
 const TIME_SLOTS = ['9:00 AM - 10:00 AM', '10:30 AM - 11:30 AM', '12:00 PM - 1:00 PM', '2:00 PM - 3:00 PM', '4:00 PM - 5:00 PM'];
 const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Bengali', 'Tamil', 'Telugu', 'Other'];
-const SESSION_TYPES = ['Physical Rehab', 'Assessment', 'Follow-up', 'Physical Therapy / Rehab'];
+const SESSION_TYPES = ['Physical Session', 'Online Session', 'Consultation'];
 
 const STEPS = ['Basic Info', 'Doctor & Clinical', 'Consent Upload', 'Pre-Session Vitals', 'Post-Session Vitals'];
 
@@ -22,6 +21,8 @@ export default function RegisterPatient() {
   const [uploading, setUploading] = useState(false);
   const [createdPatient, setCreatedPatient] = useState(null);
   const [createdSession, setCreatedSession] = useState(null);
+  // null = not yet decided, 'skip' = end after this session (no vitals), 'record' = fill in vitals
+  const [vitalsChoice, setVitalsChoice] = useState(null);
 
   const [form, setForm] = useState({
     // Basic Info
@@ -42,6 +43,16 @@ export default function RegisterPatient() {
   }, []);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e?.target ? e.target.value : e }));
+
+  const isConsultation = form.sessionType === 'Consultation';
+  const needsVitalsChoice = isConsultation && vitalsChoice === null;
+  const skippingVitals = isConsultation && vitalsChoice === 'skip';
+
+  const handleSessionTypeChange = (e) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, sessionType: value }));
+    setVitalsChoice(null);
+  };
 
   const validateStep = () => {
     if (step === 0) {
@@ -114,7 +125,15 @@ export default function RegisterPatient() {
 
   // Step 2.2 -> Start Session & Record Post-Vitals
   const submitPreVitals = async () => {
-    if (!form.sessionType || !form.spo2Percent || !form.heartRate || !form.bpMmhg) {
+    if (!form.sessionType) {
+      toast.error('Please select a session type');
+      return;
+    }
+    if (isConsultation && vitalsChoice === null) {
+      toast.error('Please confirm whether to record vitals for this consultation');
+      return;
+    }
+    if (!skippingVitals && (!form.spo2Percent || !form.heartRate || !form.bpMmhg)) {
       toast.error('Please fill all required vitals');
       return;
     }
@@ -123,16 +142,21 @@ export default function RegisterPatient() {
       const { data } = await api.post(`/patients/${createdPatient._id}/sessions`, {
         sessionType: form.sessionType,
         exerciseName: form.exerciseName,
-        spo2Percent: Number(form.spo2Percent),
-        heartRate: Number(form.heartRate),
+        spo2Percent: form.spo2Percent ? Number(form.spo2Percent) : undefined,
+        heartRate: form.heartRate ? Number(form.heartRate) : undefined,
         bpMmhg: form.bpMmhg,
         meetingLink: form.meetingLink,
       });
       setCreatedSession(data);
-      toast.success('Pre-session vitals saved');
-      setStep(4);
+      if (skippingVitals) {
+        toast.success('Consultation saved — patient registration complete!');
+        navigate('/my-patients');
+      } else {
+        toast.success('Pre-session vitals saved');
+        setStep(4);
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save pre-session vitals');
+      toast.error(err.response?.data?.message || 'Failed to save session');
     } finally {
       setSubmitting(false);
     }
@@ -199,7 +223,7 @@ export default function RegisterPatient() {
               onChange={set('assignedDoctor')}
               options={doctors.map((d) => ({ value: d._id, label: `${d.doctorName} - ${d.specialty} (${d.doctorId})` }))}
             />
-            <SelectField label="Lung / Primary Condition" required value={form.lungCondition} onChange={set('lungCondition')} options={LUNG_CONDITIONS} />
+            <TextField label="Lung / Primary Condition" required value={form.lungCondition} onChange={set('lungCondition')} placeholder="e.g. COPD, Asthma, Hypertension" />
             <CheckboxGroup
               label="Other Health Conditions / Comorbidities"
               options={COMORBIDITIES}
@@ -248,18 +272,43 @@ export default function RegisterPatient() {
             <div className="rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">
               Current Session No: 1
             </div>
-            <SelectField label="Session Type" required value={form.sessionType} onChange={set('sessionType')} options={SESSION_TYPES} />
-            <TextField label="Exercise / Activity Name" value={form.exerciseName} onChange={set('exerciseName')} placeholder="e.g. Mobility & Breathing Exercises" />
-            <TextField label="SPO2 (Pre-Session) %" required type="number" value={form.spo2Percent} onChange={set('spo2Percent')} placeholder="e.g. 98" />
-            <TextField label="Heart Rate (Pre-Session) BPM" required type="number" value={form.heartRate} onChange={set('heartRate')} placeholder="e.g. 75" />
-            <TextField label="BP (Pre-Session) mmHg" required value={form.bpMmhg} onChange={set('bpMmhg')} placeholder="SYS/DIA e.g. 125/86" />
-            <TextField
-              label="Meeting / Join Link"
-              value={form.meetingLink}
-              onChange={set('meetingLink')}
-              placeholder="https://meet.google.com/xxx-xxxx-xxx"
-            />
-            <p className="-mt-2 text-xs text-slate-400">Optional — shown to the patient as a "Join" button for this session.</p>
+            <SelectField label="Session Type" required value={form.sessionType} onChange={handleSessionTypeChange} options={SESSION_TYPES} />
+
+            {needsVitalsChoice && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2.5">
+                <p className="text-sm font-medium text-amber-800">
+                  Vitals aren't necessary for a consultation. Do you want to end registration here, or proceed to fill out vitals?
+                </p>
+                <div className="flex gap-2">
+                  <button type="button" className="btn-secondary flex-1" onClick={() => setVitalsChoice('skip')}>
+                    End Here
+                  </button>
+                  <button type="button" className="btn-primary flex-1" onClick={() => setVitalsChoice('record')}>
+                    Proceed with Vitals
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!needsVitalsChoice && !skippingVitals && (
+              <>
+                <TextField label="Exercise / Activity Name" value={form.exerciseName} onChange={set('exerciseName')} placeholder="e.g. Mobility & Breathing Exercises" />
+                <TextField label="SPO2 (Pre-Session) %" required type="number" value={form.spo2Percent} onChange={set('spo2Percent')} placeholder="e.g. 98" />
+                <TextField label="Heart Rate (Pre-Session) BPM" required type="number" value={form.heartRate} onChange={set('heartRate')} placeholder="e.g. 75" />
+                <TextField label="BP (Pre-Session) mmHg" required value={form.bpMmhg} onChange={set('bpMmhg')} placeholder="SYS/DIA e.g. 125/86" />
+                <TextField
+                  label="Meeting / Join Link"
+                  value={form.meetingLink}
+                  onChange={set('meetingLink')}
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                />
+                <p className="-mt-2 text-xs text-slate-400">Optional — shown to the patient as a "Join" button for this session.</p>
+              </>
+            )}
+
+            {skippingVitals && (
+              <p className="text-xs text-slate-400">Vitals will be skipped for this consultation. Click below to complete registration.</p>
+            )}
           </>
         )}
 
@@ -295,8 +344,14 @@ export default function RegisterPatient() {
           </button>
         )}
         {step === 3 && (
-          <button className="btn-primary flex-1" onClick={submitPreVitals} disabled={submitting}>
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Start Session & Record Post-Vitals'}
+          <button className="btn-primary flex-1" onClick={submitPreVitals} disabled={submitting || needsVitalsChoice}>
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : skippingVitals ? (
+              'Complete Registration'
+            ) : (
+              'Start Session & Record Post-Vitals'
+            )}
           </button>
         )}
         {step === 4 && (

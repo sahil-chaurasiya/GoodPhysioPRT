@@ -8,7 +8,7 @@ export function roleHomePath(role) {
     case 'doctor':
       return '/my-patients';
     case 'patient':
-      return '/my-profile';
+      return '/my-sessions';
     default:
       return '/login';
   }

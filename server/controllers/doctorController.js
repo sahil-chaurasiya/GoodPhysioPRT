@@ -36,7 +36,7 @@ exports.getDoctorById = async (req, res) => {
 // POST /api/doctors  (Admin: "Add New Doctor")
 exports.createDoctor = async (req, res) => {
   try {
-    const { doctorName, phoneNumber, email, mslCode, clinicLocation, specialty, zone } = req.body;
+    const { doctorName, phoneNumber, email, clinicLocation, specialty, zone } = req.body;
     if (!doctorName || !phoneNumber || !clinicLocation || !specialty || !zone) {
       return res.status(400).json({ message: 'Missing required doctor fields' });
     }
@@ -48,7 +48,6 @@ exports.createDoctor = async (req, res) => {
       doctorName,
       phoneNumber,
       email,
-      mslCode,
       clinicLocation,
       specialty,
       zone,
@@ -66,7 +65,7 @@ exports.updateDoctor = async (req, res) => {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
 
-    const editableFields = ['doctorName', 'phoneNumber', 'email', 'mslCode', 'clinicLocation', 'specialty', 'zone'];
+    const editableFields = ['doctorName', 'phoneNumber', 'email', 'clinicLocation', 'specialty', 'zone'];
     editableFields.forEach((f) => {
       if (req.body[f] !== undefined) doctor[f] = req.body[f];
     });

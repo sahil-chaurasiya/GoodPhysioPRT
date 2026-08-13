@@ -7,9 +7,9 @@ const NAV_ITEMS = [
   { to: '/dashboard', label: 'My Dashboard', icon: LayoutDashboard, roles: ['admin', 'prt'] },
   { to: '/register-patient', label: 'Register a Patient', icon: UserPlus, roles: ['admin', 'prt'] },
   { to: '/my-patients', label: 'My Patients', icon: Users, roles: ['admin', 'prt', 'doctor'] },
-  { to: '/my-profile', label: 'My Profile', icon: User, roles: ['patient'] },
-  { to: '/my-sessions', label: 'Sessions', icon: Video, roles: ['patient'] },
-  { to: '/me', label: 'Me', icon: User, roles: ['admin', 'prt', 'doctor', 'patient'] },
+  { to: '/my-sessions', label: 'Session', icon: Video, roles: ['patient'] },
+  { to: '/my-profile', label: 'Profile', icon: User, roles: ['patient'] },
+  { to: '/me', label: 'Me', icon: User, roles: ['admin', 'prt', 'doctor'] },
   { to: '/admin', label: 'Admin Portal', icon: ShieldCheck, roles: ['admin'] },
 ];
 

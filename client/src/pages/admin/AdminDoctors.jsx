@@ -23,7 +23,7 @@ export default function AdminDoctors() {
   const addOpen = params.get('new') === '1';
   const mapOpen = params.get('map') === '1';
 
-  const [form, setForm] = useState({ doctorName: '', phoneNumber: '', email: '', mslCode: '', clinicLocation: '', specialty: '', zone: '' });
+  const [form, setForm] = useState({ doctorName: '', phoneNumber: '', email: '', clinicLocation: '', specialty: '', zone: '' });
   const [mapForm, setMapForm] = useState({ prtId: '', doctorId: '' });
   const [loginForm, setLoginForm] = useState({ loginEmail: '', password: '' });
 
@@ -59,7 +59,7 @@ export default function AdminDoctors() {
     try {
       await api.post('/doctors', form);
       toast.success('Doctor added');
-      setForm({ doctorName: '', phoneNumber: '', email: '', mslCode: '', clinicLocation: '', specialty: '', zone: '' });
+      setForm({ doctorName: '', phoneNumber: '', email: '', clinicLocation: '', specialty: '', zone: '' });
       closeModals();
       load();
     } catch (err) {
@@ -165,7 +165,6 @@ export default function AdminDoctors() {
         <TextField label="Doctor Name" required value={form.doctorName} onChange={(e) => setForm((f) => ({ ...f, doctorName: e.target.value }))} placeholder="Dr. Romjan Ali" />
         <TextField label="Doctor Mobile" required value={form.phoneNumber} onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value }))} placeholder="10-digit number" />
         <TextField label="Doctor Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
-        <TextField label="Doctor MSL Code" value={form.mslCode} onChange={(e) => setForm((f) => ({ ...f, mslCode: e.target.value }))} />
         <TextField label="Clinic / Hospital Location" required value={form.clinicLocation} onChange={(e) => setForm((f) => ({ ...f, clinicLocation: e.target.value }))} placeholder="City, HQ, or hospital address" />
         <SelectField label="Speciality" required options={SPECIALTIES} value={form.specialty} onChange={(e) => setForm((f) => ({ ...f, specialty: e.target.value }))} />
         <SelectField label="Zone / Region" required options={ZONES} value={form.zone} onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))} />

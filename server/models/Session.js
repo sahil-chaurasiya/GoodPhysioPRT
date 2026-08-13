@@ -8,7 +8,7 @@ const sessionSchema = new mongoose.Schema(
     sessionType: {
       type: String,
       required: true,
-      enum: ['Physical Session', 'Online Session', 'Consultation'],
+      enum: ['Physical Session', 'Online Session', 'Consultation', 'Home Visit'],
     },
     exerciseName: { type: String, trim: true },
 

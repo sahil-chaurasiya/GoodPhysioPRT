@@ -9,7 +9,7 @@ import { FullPageSpinner, EmptyState } from '../components/Ui';
 import Modal from '../components/Modal';
 import { TextField, SelectField, TextareaField } from '../components/FormFields';
 
-const SESSION_TYPES = ['Physical Rehab', 'Assessment', 'Follow-up', 'Physical Therapy / Rehab'];
+const SESSION_TYPES = ['Physical Session', 'Online Session', 'Consultation', 'Home Visit'];
 
 export default function PatientDetail() {
   const { id } = useParams();

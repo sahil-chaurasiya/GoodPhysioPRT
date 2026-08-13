@@ -9,7 +9,7 @@ import { Spinner } from '../components/Ui';
 const COMORBIDITIES = ['Hypertension', 'Cardiac Condition', 'Diabetes', 'Obesity', 'Arthritis'];
 const TIME_SLOTS = ['9:00 AM - 10:00 AM', '10:30 AM - 11:30 AM', '12:00 PM - 1:00 PM', '2:00 PM - 3:00 PM', '4:00 PM - 5:00 PM'];
 const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Bengali', 'Tamil', 'Telugu', 'Other'];
-const SESSION_TYPES = ['Physical Session', 'Online Session', 'Consultation'];
+const SESSION_TYPES = ['Physical Session', 'Online Session', 'Consultation', 'Home Visit'];
 
 const STEPS = ['Basic Info', 'Doctor & Clinical', 'Consent Upload', 'Pre-Session Vitals', 'Post-Session Vitals'];
 

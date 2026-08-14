@@ -22,6 +22,7 @@ export default function PatientDetail() {
 
   const [sessionModal, setSessionModal] = useState(false);
   const [postVitalsModal, setPostVitalsModal] = useState(null); // holds session object
+  const [sessionDetailModal, setSessionDetailModal] = useState(null); // holds session object for full view
   const [medicineModal, setMedicineModal] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -261,7 +262,14 @@ export default function PatientDetail() {
         ) : (
           <div className="space-y-3">
             {sessions.map((s) => (
-              <div key={s._id} className="card p-4 text-sm">
+              <div
+                key={s._id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSessionDetailModal(s)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setSessionDetailModal(s); }}
+                className="card cursor-pointer p-4 text-sm transition hover:border-brand-200 hover:shadow-pop"
+              >
                 <div className="mb-2 flex items-center justify-between">
                   <span className="badge bg-brand-50 text-brand-700">Session {s.sessionNumber}</span>
                   <span className={`badge ${s.status === 'complete' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
@@ -279,6 +287,7 @@ export default function PatientDetail() {
                     href={s.meetingLink}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-brand-600 underline decoration-dotted"
                   >
                     <Video className="h-3.5 w-3.5" /> Join link shared with patient
@@ -294,7 +303,8 @@ export default function PatientDetail() {
                   canWrite && (
                     <button
                       className="btn-secondary mt-3 w-full text-xs"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setPostForm({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '' });
                         setPostVitalsModal(s);
                       }}
@@ -303,6 +313,7 @@ export default function PatientDetail() {
                     </button>
                   )
                 )}
+                <p className="mt-2 text-right text-[11px] font-medium text-brand-500">Tap for full session data →</p>
               </div>
             ))}
           </div>
@@ -381,6 +392,90 @@ export default function PatientDetail() {
           value={postForm.eq5d3lScore}
           onChange={(e) => setPostForm((f) => ({ ...f, eq5d3lScore: e.target.value }))}
         />
+      </Modal>
+
+      {/* Full Session Data Modal (read-only view) */}
+      <Modal
+        open={!!sessionDetailModal}
+        onClose={() => setSessionDetailModal(null)}
+        title={sessionDetailModal ? `Session ${sessionDetailModal.sessionNumber} — Full Data` : ''}
+        footer={
+          <button className="btn-secondary flex-1" onClick={() => setSessionDetailModal(null)}>Close</button>
+        }
+      >
+        {sessionDetailModal && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="badge bg-brand-50 text-brand-700">Session {sessionDetailModal.sessionNumber}</span>
+              <span className={`badge ${sessionDetailModal.status === 'complete' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                {sessionDetailModal.status === 'complete' ? 'Complete' : 'Pre-vitals only'}
+              </span>
+            </div>
+
+            <div className="card divide-y divide-slate-50 px-3.5">
+              {[
+                ['Session ID', sessionDetailModal.sessionId || '-'],
+                ['Session Type', sessionDetailModal.sessionType],
+                ['Exercise', sessionDetailModal.exerciseName || '-'],
+                ['Recorded On', sessionDetailModal.createdAt ? format(new Date(sessionDetailModal.createdAt), 'd MMM yyyy, h:mm a') : '-'],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between py-2 text-sm">
+                  <span className="text-slate-400">{label}</span>
+                  <span className="max-w-[60%] text-right font-medium text-slate-700">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {sessionDetailModal.meetingLink && (
+              <a
+                href={sessionDetailModal.meetingLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 underline decoration-dotted"
+              >
+                <Video className="h-3.5 w-3.5" /> Join link shared with patient
+              </a>
+            )}
+
+            <div>
+              <p className="mb-1.5 text-xs font-bold uppercase text-slate-400">Pre-Session Vitals</p>
+              <div className="card divide-y divide-slate-50 px-3.5">
+                {[
+                  ['SPO2', sessionDetailModal.preVitals?.spo2Percent != null ? `${sessionDetailModal.preVitals.spo2Percent}%` : '-'],
+                  ['Heart Rate', sessionDetailModal.preVitals?.heartRate != null ? `${sessionDetailModal.preVitals.heartRate} bpm` : '-'],
+                  ['BP', sessionDetailModal.preVitals?.bpMmhg || '-'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between py-2 text-sm">
+                    <span className="text-slate-400">{label}</span>
+                    <span className="font-medium text-slate-700">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1.5 text-xs font-bold uppercase text-slate-400">Post-Session Vitals</p>
+              {sessionDetailModal.status === 'complete' ? (
+                <div className="card divide-y divide-slate-50 px-3.5">
+                  {[
+                    ['Heart Rate', sessionDetailModal.postVitals?.heartRate != null ? `${sessionDetailModal.postVitals.heartRate} bpm` : '-'],
+                    ['BP', sessionDetailModal.postVitals?.bpMmhg || '-'],
+                    ['Respiration Rate', sessionDetailModal.postVitals?.respirationRate != null ? `${sessionDetailModal.postVitals.respirationRate} breaths/min` : '-'],
+                    ['6MWT', sessionDetailModal.postVitals?.sixMwtMeters != null ? `${sessionDetailModal.postVitals.sixMwtMeters} m` : '-'],
+                    ['EQ5D3L Score', sessionDetailModal.postVitals?.eq5d3lScore || '-'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between py-2 text-sm">
+                      <span className="text-slate-400">{label}</span>
+                      <span className="font-medium text-slate-700">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState title="Post-session vitals not recorded yet" />
+              )}
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Add Medicine Modal */}

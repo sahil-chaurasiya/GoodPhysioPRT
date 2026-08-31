@@ -4,13 +4,13 @@ import { LayoutDashboard, UserPlus, User, ShieldCheck, LogOut, Stethoscope, User
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'My Dashboard', icon: LayoutDashboard, roles: ['admin', 'prt'] },
-  { to: '/register-patient', label: 'Register a Patient', icon: UserPlus, roles: ['admin', 'prt'] },
-  { to: '/my-patients', label: 'My Patients', icon: Users, roles: ['admin', 'prt', 'doctor'] },
-  { to: '/my-sessions', label: 'Session', icon: Video, roles: ['patient'] },
-  { to: '/my-profile', label: 'Profile', icon: User, roles: ['patient'] },
-  { to: '/me', label: 'Me', icon: User, roles: ['admin', 'prt', 'doctor'] },
-  { to: '/admin', label: 'Admin Portal', icon: ShieldCheck, roles: ['admin'] },
+  { to: '/dashboard', label: 'My Dashboard', mobileLabel: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'prt'] },
+  { to: '/register-patient', label: 'Register a Patient', mobileLabel: 'Register', icon: UserPlus, roles: ['admin', 'prt'] },
+  { to: '/my-patients', label: 'My Patients', mobileLabel: 'Patients', icon: Users, roles: ['admin', 'prt', 'doctor'] },
+  { to: '/my-sessions', label: 'Session', mobileLabel: 'Session', icon: Video, roles: ['patient'] },
+  { to: '/my-profile', label: 'Profile', mobileLabel: 'Profile', icon: User, roles: ['patient'] },
+  { to: '/me', label: 'Me', mobileLabel: 'Me', icon: User, roles: ['admin', 'prt', 'doctor'] },
+  { to: '/admin', label: 'Admin Portal', mobileLabel: 'Admin', icon: ShieldCheck, roles: ['admin'] },
 ];
 
 const ROLE_LABELS = {
@@ -102,18 +102,18 @@ export default function Layout() {
 
         {/* Mobile bottom nav */}
         <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 flex border-t border-slate-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-          {items.map(({ to, label, icon: Icon }) => (
+          {items.map(({ to, label, mobileLabel, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${
+                `flex min-w-0 flex-1 basis-0 flex-col items-center gap-0.5 px-0.5 py-2.5 text-[10px] font-medium leading-tight ${
                   isActive ? 'text-brand-600' : 'text-slate-400'
                 }`
               }
             >
-              <Icon className="h-5 w-5" />
-              {label}
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="w-full truncate text-center">{mobileLabel || label}</span>
             </NavLink>
           ))}
         </nav>

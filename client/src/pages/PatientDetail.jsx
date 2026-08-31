@@ -2,12 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { ArrowLeft, MoreVertical, Plus, Activity, Pill, KeyRound, Video } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Plus, Activity, Pill, KeyRound, Video, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { FullPageSpinner, EmptyState } from '../components/Ui';
 import Modal from '../components/Modal';
 import { TextField, SelectField, TextareaField } from '../components/FormFields';
+import { exportPatientPdf, exportPatientExcel } from '../utils/patientExport';
 
 const SESSION_TYPES = ['OPD', 'ICU/IPD', 'Home Visit', 'Online', 'Consultation'];
 
@@ -28,6 +29,8 @@ export default function PatientDetail() {
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exportModal, setExportModal] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState(null); // 'pdf' | 'excel' | null
 
   const [sessionForm, setSessionForm] = useState({ sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', remark: '', meetingLink: '' });
   const [postForm, setPostForm] = useState({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '', remark: '' });
@@ -144,6 +147,23 @@ export default function PatientDetail() {
     }
   };
 
+  const handleExport = async (fmt) => {
+    setExportingFormat(fmt);
+    try {
+      if (fmt === 'pdf') {
+        exportPatientPdf(patient, sessions, medicines);
+      } else {
+        await exportPatientExcel(patient, sessions, medicines);
+      }
+      toast.success(`${fmt === 'pdf' ? 'PDF' : 'Excel'} report downloaded`);
+      setExportModal(false);
+    } catch (err) {
+      toast.error('Failed to generate report');
+    } finally {
+      setExportingFormat(null);
+    }
+  };
+
   const gridItems = [
     ['Age', `${patient.age} Yrs`],
     ['Doctor', patient.assignedDoctor?.doctorName || '-'],
@@ -162,6 +182,10 @@ export default function PatientDetail() {
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-medium text-slate-500">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setExportModal(true)} className="btn-secondary text-xs">
+            <Download className="h-4 w-4" /> Export
+          </button>
         {(canWrite || isAdmin) && (
           <div className="relative">
             <button onClick={() => setMenuOpen((o) => !o)} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100">
@@ -217,6 +241,7 @@ export default function PatientDetail() {
             )}
           </div>
         )}
+        </div>
       </div>
 
       <div>
@@ -540,6 +565,45 @@ export default function PatientDetail() {
         <p className="text-sm text-slate-600">
           Are you sure you want to delete <span className="font-semibold">{patient.name}</span>? This will permanently remove their record, all session logs, and all medicine data. This action cannot be undone.
         </p>
+      </Modal>
+
+      {/* Export Patient Report Modal */}
+      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Export Patient Report">
+        <p className="text-xs text-slate-400">
+          Includes patient details, the full session log, and medicine data for {patient.name}.
+        </p>
+        <div className="space-y-2.5">
+          <button
+            onClick={() => handleExport('pdf')}
+            disabled={!!exportingFormat}
+            className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3.5 text-left transition hover:border-brand-300 hover:bg-brand-50/50 disabled:opacity-60"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-500">
+              <FileText className="h-5 w-5" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-bold text-slate-800">
+                {exportingFormat === 'pdf' ? 'Generating PDF…' : 'Export as PDF'}
+              </span>
+              <span className="block text-xs text-slate-400">A print-ready clinical report</span>
+            </span>
+          </button>
+          <button
+            onClick={() => handleExport('excel')}
+            disabled={!!exportingFormat}
+            className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3.5 text-left transition hover:border-brand-300 hover:bg-brand-50/50 disabled:opacity-60"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <FileSpreadsheet className="h-5 w-5" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-bold text-slate-800">
+                {exportingFormat === 'excel' ? 'Generating Excel…' : 'Export as Excel'}
+              </span>
+              <span className="block text-xs text-slate-400">Formatted spreadsheet with separate sheets</span>
+            </span>
+          </button>
+        </div>
       </Modal>
     </div>
   );

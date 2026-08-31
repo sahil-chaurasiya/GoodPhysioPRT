@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, Activity, FileText, Download } from 'lucide-react';
 import api from '../../api/axios';
 import { FullPageSpinner, EmptyState, SearchBar, PageHeader } from '../../components/Ui';
+import { exportReportsExcel } from '../../utils/reportsExport';
 
 export default function AdminReports() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function AdminReports() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState([]); // flattened session or medicine rows
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,34 +70,16 @@ export default function AdminReports() {
     (r) => !search || r.patientName.toLowerCase().includes(search.toLowerCase()) || r.prtName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const csvEscape = (val) => {
-    const str = val === undefined || val === null ? '' : String(val);
-    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-  };
-
-  const downloadCsv = () => {
+  const downloadReport = async () => {
     if (filtered.length === 0) return toast.error('No data to download');
-    const headers =
-      tab === 'sessions'
-        ? ['Patient', 'PRT', 'Session Number', 'Session Type', 'Status', 'Remark', 'Date']
-        : ['Patient', 'PRT', 'Medicine', 'Dosage', 'Frequency', 'Date'];
-    const lines = [headers.map(csvEscape).join(',')];
-    filtered.forEach((r) => {
-      const row =
-        tab === 'sessions'
-          ? [r.patientName, r.prtName, r.sessionNumber, r.sessionType, r.status === 'complete' ? 'Complete' : 'Pre-only', r.remark, format(new Date(r.date), 'd MMM yyyy, h:mm a')]
-          : [r.patientName, r.prtName, r.medicineName, r.dosage, r.frequency, format(new Date(r.date), 'd MMM yyyy, h:mm a')];
-      lines.push(row.map(csvEscape).join(','));
-    });
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${tab}-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    setExporting(true);
+    try {
+      await exportReportsExcel(filtered, tab, search.trim());
+    } catch (err) {
+      toast.error('Failed to generate report');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -107,8 +91,8 @@ export default function AdminReports() {
       <PageHeader
         title={tab === 'sessions' ? 'All Session Data' : 'All Prescription Data'}
         right={
-          <button className="btn-secondary text-xs" onClick={downloadCsv}>
-            <Download className="h-4 w-4" /> Download Report
+          <button className="btn-secondary text-xs" onClick={downloadReport} disabled={exporting}>
+            <Download className="h-4 w-4" /> {exporting ? 'Preparing…' : 'Download Report'}
           </button>
         }
       />

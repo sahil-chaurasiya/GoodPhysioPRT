@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Activity, FileText } from 'lucide-react';
+import { ArrowLeft, Activity, FileText, Download } from 'lucide-react';
 import api from '../../api/axios';
 import { FullPageSpinner, EmptyState, SearchBar, PageHeader } from '../../components/Ui';
 
@@ -35,6 +35,7 @@ export default function AdminReports() {
             sessionNumber: s.sessionNumber,
             sessionType: s.sessionType,
             status: s.status,
+            remark: [s.preVitals?.remark, s.postVitals?.remark].filter(Boolean).join(' | '),
             date: s.createdAt,
           }))
         );
@@ -67,13 +68,50 @@ export default function AdminReports() {
     (r) => !search || r.patientName.toLowerCase().includes(search.toLowerCase()) || r.prtName.toLowerCase().includes(search.toLowerCase())
   );
 
+  const csvEscape = (val) => {
+    const str = val === undefined || val === null ? '' : String(val);
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  };
+
+  const downloadCsv = () => {
+    if (filtered.length === 0) return toast.error('No data to download');
+    const headers =
+      tab === 'sessions'
+        ? ['Patient', 'PRT', 'Session Number', 'Session Type', 'Status', 'Remark', 'Date']
+        : ['Patient', 'PRT', 'Medicine', 'Dosage', 'Frequency', 'Date'];
+    const lines = [headers.map(csvEscape).join(',')];
+    filtered.forEach((r) => {
+      const row =
+        tab === 'sessions'
+          ? [r.patientName, r.prtName, r.sessionNumber, r.sessionType, r.status === 'complete' ? 'Complete' : 'Pre-only', r.remark, format(new Date(r.date), 'd MMM yyyy, h:mm a')]
+          : [r.patientName, r.prtName, r.medicineName, r.dosage, r.frequency, format(new Date(r.date), 'd MMM yyyy, h:mm a')];
+      lines.push(row.map(csvEscape).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tab}-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4 pb-6">
       <button onClick={() => navigate('/admin')} className="flex items-center gap-1 text-sm font-medium text-slate-500">
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <PageHeader title={tab === 'sessions' ? 'All Session Data' : 'All Prescription Data'} />
+      <PageHeader
+        title={tab === 'sessions' ? 'All Session Data' : 'All Prescription Data'}
+        right={
+          <button className="btn-secondary text-xs" onClick={downloadCsv}>
+            <Download className="h-4 w-4" /> Download Report
+          </button>
+        }
+      />
 
       <div className="flex gap-2">
         <button
@@ -107,6 +145,7 @@ export default function AdminReports() {
                   <>
                     <th className="px-4 py-2.5">Session</th>
                     <th className="px-4 py-2.5">Status</th>
+                    <th className="px-4 py-2.5">Remark</th>
                   </>
                 ) : (
                   <>
@@ -126,6 +165,7 @@ export default function AdminReports() {
                     <>
                       <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">#{r.sessionNumber} — {r.sessionType}</td>
                       <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">{r.status === 'complete' ? 'Complete' : 'Pre-only'}</td>
+                      <td className="px-4 py-2.5 text-slate-500 max-w-[200px] truncate">{r.remark || '-'}</td>
                     </>
                   ) : (
                     <>

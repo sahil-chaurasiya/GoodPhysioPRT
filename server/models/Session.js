@@ -8,7 +8,7 @@ const sessionSchema = new mongoose.Schema(
     sessionType: {
       type: String,
       required: true,
-      enum: ['Physical Session', 'Online Session', 'Consultation', 'Home Visit'],
+      enum: ['OPD', 'ICU/IPD', 'Home Visit', 'Online', 'Consultation'],
     },
     exerciseName: { type: String, trim: true },
 
@@ -22,6 +22,7 @@ const sessionSchema = new mongoose.Schema(
       spo2Percent: { type: Number },
       heartRate: { type: Number },
       bpMmhg: { type: String }, // SYS/DIA
+      remark: { type: String, trim: true },
     },
 
     postVitals: {
@@ -30,6 +31,7 @@ const sessionSchema = new mongoose.Schema(
       respirationRate: { type: Number },
       sixMwtMeters: { type: Number },
       eq5d3lScore: { type: String }, // 5-digit string e.g. 32132
+      remark: { type: String, trim: true },
     },
 
     status: { type: String, enum: ['pre-only', 'complete'], default: 'pre-only' },

@@ -9,7 +9,7 @@ import { FullPageSpinner, EmptyState } from '../components/Ui';
 import Modal from '../components/Modal';
 import { TextField, SelectField, TextareaField } from '../components/FormFields';
 
-const SESSION_TYPES = ['Physical Session', 'Online Session', 'Consultation', 'Home Visit'];
+const SESSION_TYPES = ['OPD', 'ICU/IPD', 'Home Visit', 'Online', 'Consultation'];
 
 export default function PatientDetail() {
   const { id } = useParams();
@@ -29,8 +29,8 @@ export default function PatientDetail() {
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [sessionForm, setSessionForm] = useState({ sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', meetingLink: '' });
-  const [postForm, setPostForm] = useState({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '' });
+  const [sessionForm, setSessionForm] = useState({ sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', remark: '', meetingLink: '' });
+  const [postForm, setPostForm] = useState({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '', remark: '' });
   const [medForm, setMedForm] = useState({ medicineName: '', dosage: '', frequency: '', notes: '' });
   const [loginForm, setLoginForm] = useState({ loginEmail: '', password: '' });
 
@@ -67,7 +67,7 @@ export default function PatientDetail() {
       });
       toast.success('Session started — pre-vitals recorded');
       setSessionModal(false);
-      setSessionForm({ sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', meetingLink: '' });
+      setSessionForm({ sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', remark: '', meetingLink: '' });
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add session');
@@ -88,7 +88,7 @@ export default function PatientDetail() {
       });
       toast.success('Post-session vitals saved');
       setPostVitalsModal(null);
-      setPostForm({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '' });
+      setPostForm({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '', remark: '' });
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save post-vitals');
@@ -305,7 +305,7 @@ export default function PatientDetail() {
                       className="btn-secondary mt-3 w-full text-xs"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPostForm({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '' });
+                        setPostForm({ heartRate: '', bpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '', remark: '' });
                         setPostVitalsModal(s);
                       }}
                     >
@@ -361,6 +361,7 @@ export default function PatientDetail() {
         <TextField label="SPO2 (Pre-Session) %" required type="number" value={sessionForm.spo2Percent} onChange={(e) => setSessionForm((f) => ({ ...f, spo2Percent: e.target.value }))} />
         <TextField label="HeartRate Pre" required type="number" value={sessionForm.heartRate} onChange={(e) => setSessionForm((f) => ({ ...f, heartRate: e.target.value }))} />
         <TextField label="BP (Pre-Session) mmHg" required value={sessionForm.bpMmhg} onChange={(e) => setSessionForm((f) => ({ ...f, bpMmhg: e.target.value }))} placeholder="125/86" />
+        <TextareaField label="Remark" value={sessionForm.remark} onChange={(e) => setSessionForm((f) => ({ ...f, remark: e.target.value }))} placeholder="Any additional notes about this session" />
         <TextField
           label="Meeting / Join Link"
           value={sessionForm.meetingLink}
@@ -392,6 +393,7 @@ export default function PatientDetail() {
           value={postForm.eq5d3lScore}
           onChange={(e) => setPostForm((f) => ({ ...f, eq5d3lScore: e.target.value }))}
         />
+        <TextareaField label="Remark" value={postForm.remark} onChange={(e) => setPostForm((f) => ({ ...f, remark: e.target.value }))} placeholder="Any additional notes about this session" />
       </Modal>
 
       {/* Full Session Data Modal (read-only view) */}
@@ -444,6 +446,7 @@ export default function PatientDetail() {
                   ['SPO2', sessionDetailModal.preVitals?.spo2Percent != null ? `${sessionDetailModal.preVitals.spo2Percent}%` : '-'],
                   ['Heart Rate', sessionDetailModal.preVitals?.heartRate != null ? `${sessionDetailModal.preVitals.heartRate} bpm` : '-'],
                   ['BP', sessionDetailModal.preVitals?.bpMmhg || '-'],
+                  ['Remark', sessionDetailModal.preVitals?.remark || '-'],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between py-2 text-sm">
                     <span className="text-slate-400">{label}</span>
@@ -463,6 +466,7 @@ export default function PatientDetail() {
                     ['Respiration Rate', sessionDetailModal.postVitals?.respirationRate != null ? `${sessionDetailModal.postVitals.respirationRate} breaths/min` : '-'],
                     ['6MWT', sessionDetailModal.postVitals?.sixMwtMeters != null ? `${sessionDetailModal.postVitals.sixMwtMeters} m` : '-'],
                     ['EQ5D3L Score', sessionDetailModal.postVitals?.eq5d3lScore || '-'],
+                    ['Remark', sessionDetailModal.postVitals?.remark || '-'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex items-center justify-between py-2 text-sm">
                       <span className="text-slate-400">{label}</span>

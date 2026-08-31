@@ -77,6 +77,23 @@ export default function Layout() {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile top bar — carries the logout action on mobile, since the
+            sidebar (which normally holds it) is hidden below the sm breakpoint. */}
+        <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3 sm:hidden">
+          <div className="flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white">
+              <Stethoscope className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-extrabold leading-tight text-slate-900">{user?.name}</p>
+              <p className="truncate text-[10px] leading-tight text-slate-400">{ROLE_LABELS[user?.role] || user?.role}</p>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="flex items-center gap-1 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500">
+            <LogOut className="h-4.5 w-4.5" />
+          </button>
+        </div>
+
         <main className="no-scrollbar flex-1 overflow-y-auto px-4 pb-24 pt-4 sm:px-8 sm:pb-8 sm:pt-6">
           <div className="mx-auto w-full max-w-5xl">
             <Outlet />

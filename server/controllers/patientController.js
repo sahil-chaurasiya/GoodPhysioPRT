@@ -237,7 +237,7 @@ exports.createSession = async (req, res) => {
     const patient = await Patient.findById(req.params.id);
     if (!patient) return res.status(404).json({ message: 'Patient not found' });
 
-    const { sessionType, exerciseName, spo2Percent, heartRate, bpMmhg, meetingLink } = req.body;
+    const { sessionType, exerciseName, spo2Percent, heartRate, bpMmhg, remark, meetingLink } = req.body;
     if (!sessionType) {
       return res.status(400).json({ message: 'sessionType is required' });
     }
@@ -261,7 +261,7 @@ exports.createSession = async (req, res) => {
       sessionType,
       exerciseName,
       meetingLink,
-      preVitals: { spo2Percent, heartRate, bpMmhg },
+      preVitals: { spo2Percent, heartRate, bpMmhg, remark },
       status: 'pre-only',
       recordedBy: req.user._id,
     });
@@ -278,7 +278,7 @@ exports.updateSessionPostVitals = async (req, res) => {
     const session = await Session.findOne({ _id: req.params.sessionId, patient: req.params.id });
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    const { heartRate, bpMmhg, respirationRate, sixMwtMeters, eq5d3lScore, meetingLink } = req.body;
+    const { heartRate, bpMmhg, respirationRate, sixMwtMeters, eq5d3lScore, remark, meetingLink } = req.body;
 
     session.postVitals = {
       heartRate,
@@ -286,6 +286,7 @@ exports.updateSessionPostVitals = async (req, res) => {
       respirationRate,
       sixMwtMeters,
       eq5d3lScore,
+      remark,
     };
     // Allow the PRT to add/update the join link at this stage too, if it
     // wasn't set (or needs changing) when the session was first created.

@@ -9,7 +9,7 @@ import { Spinner } from '../components/Ui';
 const COMORBIDITIES = ['Hypertension', 'Cardiac Condition', 'Diabetes', 'Obesity', 'Arthritis'];
 const TIME_SLOTS = ['9:00 AM - 10:00 AM', '10:30 AM - 11:30 AM', '12:00 PM - 1:00 PM', '2:00 PM - 3:00 PM', '4:00 PM - 5:00 PM'];
 const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Bengali', 'Tamil', 'Telugu', 'Other'];
-const SESSION_TYPES = ['Physical Session', 'Online Session', 'Consultation', 'Home Visit'];
+const SESSION_TYPES = ['OPD', 'ICU/IPD', 'Home Visit', 'Online', 'Consultation'];
 
 const STEPS = ['Basic Info', 'Doctor & Clinical', 'Consent Upload', 'Pre-Session Vitals', 'Post-Session Vitals'];
 
@@ -33,9 +33,9 @@ export default function RegisterPatient() {
     // Consent
     consentFormUrl: '', consentFormPublicId: '',
     // Pre vitals
-    sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', meetingLink: '',
+    sessionType: '', exerciseName: '', spo2Percent: '', heartRate: '', bpMmhg: '', preRemark: '', meetingLink: '',
     // Post vitals
-    postHeartRate: '', postBpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '',
+    postHeartRate: '', postBpMmhg: '', respirationRate: '', sixMwtMeters: '', eq5d3lScore: '', remark: '',
   });
 
   useEffect(() => {
@@ -145,6 +145,7 @@ export default function RegisterPatient() {
         spo2Percent: form.spo2Percent ? Number(form.spo2Percent) : undefined,
         heartRate: form.heartRate ? Number(form.heartRate) : undefined,
         bpMmhg: form.bpMmhg,
+        remark: form.preRemark,
         meetingLink: form.meetingLink,
       });
       setCreatedSession(data);
@@ -172,6 +173,7 @@ export default function RegisterPatient() {
         respirationRate: form.respirationRate ? Number(form.respirationRate) : undefined,
         sixMwtMeters: form.sixMwtMeters ? Number(form.sixMwtMeters) : undefined,
         eq5d3lScore: form.eq5d3lScore,
+        remark: form.remark,
       });
       toast.success('Patient registration & session log complete!');
       navigate('/my-patients');
@@ -296,6 +298,7 @@ export default function RegisterPatient() {
                 <TextField label="SPO2 (Pre-Session) %" required type="number" value={form.spo2Percent} onChange={set('spo2Percent')} placeholder="e.g. 98" />
                 <TextField label="Heart Rate (Pre-Session) BPM" required type="number" value={form.heartRate} onChange={set('heartRate')} placeholder="e.g. 75" />
                 <TextField label="BP (Pre-Session) mmHg" required value={form.bpMmhg} onChange={set('bpMmhg')} placeholder="SYS/DIA e.g. 125/86" />
+                <TextareaField label="Remark" value={form.preRemark} onChange={set('preRemark')} placeholder="Any additional notes about this session" />
                 <TextField
                   label="Meeting / Join Link"
                   value={form.meetingLink}
@@ -328,6 +331,7 @@ export default function RegisterPatient() {
             <p className="text-xs text-slate-400">
               Example: 32132 → 3 Mobility, 2 Self-Care, 1 Usual Activity, 3 Pain/Discomfort, 2 Anxiety/Depression
             </p>
+            <TextareaField label="Remark" value={form.remark} onChange={set('remark')} placeholder="Any additional notes about this session" />
           </>
         )}
       </div>
